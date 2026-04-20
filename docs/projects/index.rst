@@ -108,6 +108,7 @@ Contents
    QUAD_ADAQ7768-1 <quad_adaq77681/index>
    PULSAR-ADC <pulsar_adc/index>
    PULSAR-LVDS-ADC <pulsar_lvds_adc/index>
+   ADMX6020M <admx6020m/index>
    
 Obsolete projects
 -------------------------------------------------------------------------------
