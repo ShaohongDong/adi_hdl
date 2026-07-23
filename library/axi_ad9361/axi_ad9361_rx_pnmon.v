@@ -63,9 +63,12 @@ module axi_ad9361_rx_pnmon #(
 
   // internal registers
 
-  reg             adc_pn0_valid = 'd0;
+  /* Keep the PN0 valid pipeline local to each channel instance. Without this,
+   * synthesis can merge the equivalent registers from all four monitors and
+   * create one long, high-fanout CE route across the complete AD9361 core. */
+  (* keep = "true" *) reg adc_pn0_valid = 'd0;
   reg     [15:0]  adc_pn0_data = 'd0;
-  reg             adc_pn0_valid_in = 'd0;
+  (* keep = "true" *) reg adc_pn0_valid_in = 'd0;
   reg     [15:0]  adc_pn0_data_in = 'd0;
   reg     [15:0]  adc_pn0_data_pn = 'd0;
   reg             adc_pn1_valid_t = 'd0;
