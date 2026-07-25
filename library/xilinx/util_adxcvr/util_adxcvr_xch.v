@@ -404,9 +404,23 @@ module util_adxcvr_xch #(
 
   wire        rx_bufstatus_rst;
   wire [ 1:0] rx_bufstatus;
-  wire [ 1:0] rx_bufstatus_s;
+  wire [ 2:0] rx_bufstatus_s;
+  wire        rx_bufstatus_underflow_s;
+  wire        rx_bufstatus_overflow_s;
   wire [ 1:0] tx_bufstatus;
   wire [ 1:0] tx_bufstatus_s;
+
+  /*
+   * RXBUFSTATUS is a three-bit encoded status on Xilinx transceivers.
+   * In 8B/10B mode 3'b101 is underflow and 3'b110 is overflow; bits 1:0
+   * alone also represent non-error buffer occupancy. Preserve bit 2 and
+   * decode the complete value instead of treating occupancy as an error.
+   * The 64B/66B gearbox retains its two independent status indications.
+   */
+  assign rx_bufstatus_underflow_s =
+    LINK_MODE[1] ? rx_bufstatus_s[0] : (rx_bufstatus_s == 3'b101);
+  assign rx_bufstatus_overflow_s =
+    LINK_MODE[1] ? rx_bufstatus_s[1] : (rx_bufstatus_s == 3'b110);
 
   sync_bits #(
     .NUM_OF_BITS(1)
@@ -419,7 +433,7 @@ module util_adxcvr_xch #(
   always @(posedge rx_clk) begin
     if (rx_bufstatus_rst) begin
       rx_bufstatus_sticky_0 <= 1'b0;
-    end else if (rx_bufstatus_s[0]) begin
+    end else if (rx_bufstatus_underflow_s) begin
       rx_bufstatus_sticky_0 <= 1'b1;
     end
   end
@@ -427,7 +441,7 @@ module util_adxcvr_xch #(
   always @(posedge rx_clk) begin
     if (rx_bufstatus_rst) begin
       rx_bufstatus_sticky_1 <= 1'b0;
-    end else if (rx_bufstatus_s[1]) begin
+    end else if (rx_bufstatus_overflow_s) begin
       rx_bufstatus_sticky_1 <= 1'b1;
     end
   end
@@ -514,7 +528,7 @@ module util_adxcvr_xch #(
       assign rx_usrclk = rx_clk;
       assign tx_usrclk = tx_clk;
 
-      assign rx_bufstatus[0] = rx_bufstatus_sticky_1;
+      assign rx_bufstatus[0] = rx_bufstatus_sticky_0;
       assign rx_bufstatus[1] = rx_bufstatus_sticky_1;
 
       assign tx_bufstatus[0] = tx_bufstatus_s[1];
